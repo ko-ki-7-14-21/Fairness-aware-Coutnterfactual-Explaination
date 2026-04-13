@@ -1,0 +1,2 @@
+seed,K,m,n,size,alpha,beta,objective,dd_face1_time,dd_face1_first_feas,dd_face1_gap,dd_face1_status,dd_face2_time,dd_face2_first_feas,dd_face2_gap,dd_face2_status,G,price_term,fairness_term1,fairness_term2
+0,2,5,5,small,0.0,0.0,0.0020736000000000023,0.09398698806762695,0.019371986389160156,0.0,optimal,0.039433956146240234,0.00035381317138671875,0.0,optimal,0.0920688728319728,0.1018233764908629,0.0003097111341544102,0.07154934196672302

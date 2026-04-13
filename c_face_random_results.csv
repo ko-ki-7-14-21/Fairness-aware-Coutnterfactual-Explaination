@@ -1,0 +1,2 @@
+seed_data,K,n,m,alpha,beta,G,price_term,fairness_term1,fairness_term2,objective,t,gap,status
+0,50,100,100,0.25,0.25,nan,nan,nan,nan,nan,600.4169659614563,,time_limit

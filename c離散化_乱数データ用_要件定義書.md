@@ -1,0 +1,61 @@
+K_max=10
+n_max=50
+m_max=50
+seed=0
+M=10**4
+alpha_list = [0, 0.25, 0.5, 0.75, 1]
+beta_list = [0, 0.25, 0.5, 0.75, 1]
+
+
+def solve_original_LP(A,b_vecs,c_hat,k,m,n):
+    次の問題をGurobiで解く
+    \min_{x \in R^k*n} \sum^K_{k=1} c_hat @ x[k]
+    s. t. A @ x[k] >= b_vecs[k] (k=1,...,K)
+          x[k] >= 0 (k=1,...,K)
+    return x_hat = x.X
+
+def solve_FACE(A,b_vecs,c_hat,h,x_hat,k,m,n,alpha,beta):
+    次の問題をgurobiで解く(時間上限300s)
+    \min_{\bm{X},\bm{Y},\bm{c},\bm{U},\bm{v},v_{\text{ave}},v_{\text{max}},\bm{Z}} \quad & (1-\alpha-\beta) \frac{1}{n} \sum^n_{i=1} \Big{(}\frac{c_i - \hat{c_i}}{\hat{c_i}}\Big{)}^2 + \alpha \frac{1}{k} \sum^K_{k=1}(v_k - v_{\text{ave}})^2 + \beta v_{\max}^2 \\
+    \text{s. t.} \quad & \bm{A}\bm{x}_k \ge \bm{b}_k, \quad \bm{x}_k \ge \bm{0}  \tag*{$(k=1,...,K)$} \\
+    & \bm{A}^\top \bm{y}_k \le \bm{c}, \quad \bm{y}_k \ge \bm{0} \tag*{$(k=1,...,K)$} \\
+    & \bm{b}_k^{\top} \bm{y}_k = \sum^n_{i=1}\sum^{|D_i|}_{j=1}d_{i,j}u_{k,i,j} \tag*{$(k=1,...,K)$} \\
+    & v_k = \frac{\sum^n_{i=1}\sum^{|D_i|}_{j=1}d_{i,j}u_{k,i,j} - \hat{\bm{c}}^{\top} \hat{\bm{x}}_k}{\hat{\bm{c}}^{\top} \hat{\bm{x}}_k} \tag*{$(k=1,...,K)$} \\
+    & v_{\text{max}} \ge 0 ,\quad v_{\text{max}}  \ge v_k \tag*{$(k=1,...,K)$} \\ 
+    & \sum^K_{k=1} \bm{x}_k \le \bm{h} \\
+    & c_i=\sum^{|D_i|}_{j=1}d_{i,j}z_{i,j} \tag*{$(i=1,...,n)$}\\
+    & 0 \ge u_{k,i,j} \ge Mz_{i,j}, \quad x_{k,i} -M(1-z_{i,j}) \ge u_{k,i,j} \ge x_{k,i} \tag*{$(i=1,...,n),(k=1,...,K)$}\\
+    & z_{i,j} \in \{0,1\}, \quad \sum^{|D_i|}_{j=1} z_{i,j}=1 \tag*{$(i=1,...,n)$}\\
+    & D=[\lambda_1\hat{\bm{c}},\lambda_2\hat{\bm{c}}]
+    
+    t=計算時間
+    gap=計算終了時のgap
+    return x.X, c.X, v.X, v_ave.X, v_max.X, t, gap
+
+for K in range(2,K_max+1):
+    for n in range(4,n_max+1):
+        for m in range(4,m_max+1):
+            次のような乱数行列を生成
+            A:R^m*n の行列、各要素a[i][j]は(0,1]区間の一様分布からランダムに生成
+            b_vecs:R^K*m の行列、各要素b[k][j]は(1,0]区間の一様分布からランダムに生成
+            c_hat:N^n のベクトル、各要素c_hat[i]は[1,100]区間の一様分布からランダムに生成
+            以上の乱数行列を生成する際、random_seed=seed
+
+            x_hat = solve_original_LP
+
+            次のようなベクトルを生成
+            h:R^n のベクトル、n/3個の要素についてh[i]=(1/2) * \sum^K_{k=1}x_hat[k][i]、そのほかの要素はM、n/3個の要素の選び方は[1,n]の一様分布からランダムに非復元抽出
+            for alpha in alpha_list:
+                for beta in beta_list:
+                if alpha + beta <= 1:
+                    x,c,v,v_ave,v_max, t, gap = solve_FACE(A,b_vecs,c_hat,h,x_hat,k,m,n,alpha,beta)
+                    
+                    price_term = \sum^n_{i=1} ((c[i]-c_hat[i])/c_hat[i])**2
+                    fairness_term1 = \sum^K_{k=1} (v_[k]-v_ave)**2
+                    fairness_term2 = v_max**2
+                    G = (1/n) * price_term + (1/K) * fairness_term1 + fairness_term2
+
+                    一回の実験ごとにK,n,m,alpha,beta,G,price_term,fairness_term1,fairness_term2,t,gapを1行にまとめたcsvを作成
+
+csvを保存
+
